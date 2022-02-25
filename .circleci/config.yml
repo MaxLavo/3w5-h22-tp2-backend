@@ -1,0 +1,51 @@
+version: 2.1
+orbs:
+  node: circleci/node@5.0.0
+jobs:
+
+  Checkout_and_unit_test:
+    machine: true
+    steps:
+      - checkout
+      - run: npm install
+
+  integrateFrontend:
+    machine: true
+    steps:
+      - run: git clone https://github.com/MaxLavo/3w5-h22-tp2-frontend.git
+      - run: git clone https://github.com/MaxLavo/3w5-h22-tp2-backend.git
+      - run: cd 3w5-h22-tp2-backend && npm install
+      - run: cd ..
+      - run: cd 3w5-h22-tp2-frontend && npm install
+      - run: npm build
+      - run: cd ..
+      - run: cd 3w5-h22-tp2-backend
+      - run: mkdir public
+      - run: cp -rT 3w5-h22-tp2-frontend 3w5-h22-tp2-backend
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "3w5-h22-tp2-backend"
+  deploy:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: .
+      - run: ls -RL
+  
+workflows:
+  build:
+    jobs:
+      
+
+      - Checkout_and_unit_test
+      - node/test:
+          requires:
+            - Checkout_and_unit_test
+      - integrateFrontend:
+          requires: 
+            - node/test
+      - deploy:
+          requires:
+            - "integrateFrontend"
+#yes
